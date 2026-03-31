@@ -1,0 +1,20 @@
+services:
+  saml-frontend:
+    build: ./react-frontend
+    container_name: saml-frontend
+    ports:
+      - "8081:80"
+    networks:
+      - app_net
+
+  saml-backend:
+    build: ./fastapi-backend
+    container_name: saml-backend
+    env_file:
+      - .env
+    networks:
+      - app_net
+
+networks:
+  app_net:
+    driver: bridge
