@@ -5,12 +5,18 @@ import base64, zlib, uuid
 from datetime import datetime, timezone
 from xml.etree import ElementTree as ET
 
+REQUIRED_ENV_VARS = ["IDAM_SSO_URL", "ISSUER", "ACS_URL", "FRONTEND_REDIRECT"]
+
+missing = [var for var in REQUIRED_ENV_VARS if not os.getenv(var)]
+if missing:
+    raise RuntimeError(f"Missing required environment variables: {', '.join(missing)}")
+
 app = FastAPI()
 
-IDAM_SSO_URL = os.getenv("IDAM_SSO_URL", "https://idamuat.tvscredit.com/CIDSaas/default/user/spsso")
-ISSUER = os.getenv("ISSUER", "https://intranetmprpptxuat.tvscredit.com")
-ACS_URL = os.getenv("ACS_URL", "https://intranetmprpptxuat.tvscredit.com/api/acs")
-FRONTEND_REDIRECT = os.getenv("FRONTEND_REDIRECT", "https://intranetmprpptxuat.tvscredit.com")
+IDAM_SSO_URL = os.getenv("IDAM_SSO_URL")
+ISSUER = os.getenv("ISSUER")
+ACS_URL = os.getenv("ACS_URL")
+FRONTEND_REDIRECT = os.getenv("FRONTEND_REDIRECT")
 
 def deflate_and_base64(xml: str):
     compressor = zlib.compressobj(wbits=-15)
