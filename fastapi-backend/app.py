@@ -25,7 +25,6 @@ app = FastAPI()
 IDAM_SSO_URL     = os.getenv("IDAM_SSO_URL")
 ISSUER           = os.getenv("ISSUER")
 ACS_URL          = os.getenv("ACS_URL")
-IDP_CERT = os.getenv("IDP_CERT")
 FRONTEND_REDIRECT = os.getenv("FRONTEND_REDIRECT")
 
 IDP_CERT_B64 = os.getenv("IDP_CERT", "").replace("\n", "").replace(" ", "").strip()
@@ -49,18 +48,25 @@ NS = {
 }
 
 def verify_saml_signature(root: etree._Element) -> bool:
-    """
-    Verify the XML digital signature on the Assertion (or Response).
-    Returns True if valid, raises on failure.
-    """
-    # Try to find a Signature node — prefer the one on the Assertion
-    signature_node = root.find(".//ds:Signature", NS)
+    """Verify the signature on the Assertion element."""
+    
+    # Get the Assertion element directly — it has its own signature
+    assertion = root.find(".//saml2:Assertion", NS)
+    if assertion is None:
+        raise ValueError("No Assertion element found")
+
+    # Use xmlsec's own finder — it understands the signature structure
+    signature_node = xmlsec.tree.find_node(assertion, xmlsec.Node.SIGNATURE)
     if signature_node is None:
-        raise ValueError("No Signature element found in SAML response")
+        raise ValueError("No Signature found in Assertion")
 
     ctx = xmlsec.SignatureContext()
     ctx.key = IDP_KEY
-    ctx.verify(signature_node)   # raises xmlsec.Error if invalid
+
+    # Register the ID attribute so xmlsec can resolve the URI="#IBAM-..." reference
+    xmlsec.tree.add_ids(assertion, ["ID"])
+
+    ctx.verify(signature_node)
     return True
 
 def parse_saml_assertion(root: etree._Element) -> dict:
