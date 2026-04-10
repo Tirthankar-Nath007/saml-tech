@@ -93,4 +93,4 @@ async def acs(request: Request):
         return HTMLResponse("Login failed: NameID not found in SAML response", status_code=401)
 
     user_id = name_id_el.text
-    return RedirectResponse(f"{FRONTEND_REDIRECT}/?user={user_id}")
+    return RedirectResponse(f"{FRONTEND_REDIRECT}/?user={user_id}", status_code=303)
