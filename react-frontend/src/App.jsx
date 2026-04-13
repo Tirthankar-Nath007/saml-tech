@@ -34,7 +34,8 @@ function App() {
 
   const handleLogout = () => {
     setUser(null);
-    window.location.href = "/api/logout";
+    // window.location.href = "/api/logout"; //clears only local session
+    window.location.href = "/api/slo"; //redirects to idp to kill the idp session
   };
 
   return (
