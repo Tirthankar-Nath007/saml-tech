@@ -1,50 +1,50 @@
+import { Routes, Route, Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
+import LoginPage from "./pages/LoginPage";
+import HomePage from "./pages/HomePage";
 
 function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // On every page load, ask the backend if we have a valid session.
-    // The browser automatically sends the HttpOnly cookie with this request
-    // (credentials: "include" is required for cross-origin fetches).
-    // We never read the cookie directly — JS can't, because it's HttpOnly.
-    fetch("/api/auth/me", { credentials: "include" })
-      .then((res) => {
-        if (res.ok) return res.json();
-        return null; // 401 = not authenticated
-      })
-      .then((data) => {
-        if (data?.authenticated) setUser(data.user_id);
-      })
-      .finally(() => setLoading(false));
+    const params = new URLSearchParams(window.location.search);
+    const u = params.get("user");
+    if (u) {
+      setUser(u);
+      window.history.replaceState({}, "", "/");
+    }
+    setLoading(false);
   }, []);
 
-  const login = () => {
+  const handleLogin = () => {
     window.location.href = "/api/login";
   };
 
-  const logout = () => {
-    // /api/slo redirects to IdP to kill the IdP session too.
-    // Use /api/logout instead if you only want local cookie cleared.
-    window.location.href = "/api/slo";
+  const handleLogout = () => {
+    setUser(null);
+    window.location.href = "/";
   };
 
-  if (loading) return <div style={{ padding: 40 }}>Checking session...</div>;
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-muted via-background to-muted">
+        <div className="text-muted-foreground">Loading...</div>
+      </div>
+    );
+  }
 
   return (
-    <div style={{ padding: 40 }}>
-      <h1>SAML POC</h1>
-
-      {!user ? (
-        <button onClick={login}>Login with SAML</button>
-      ) : (
-        <div>
-          <h2>Logged in as: {user}</h2>
-          <button onClick={logout}>Logout</button>
-        </div>
-      )}
-    </div>
+    <Routes>
+      <Route
+        path="/"
+        element={user ? <Navigate to="/home" replace /> : <LoginPage />}
+      />
+      <Route
+        path="/home"
+        element={user ? <HomePage user={user} onLogout={handleLogout} /> : <Navigate to="/" replace />}
+      />
+    </Routes>
   );
 }
 
