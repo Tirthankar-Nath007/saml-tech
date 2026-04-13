@@ -1,5 +1,5 @@
 import { Shield } from "lucide-react";
-import { Button } from "../components/ui/button.jsx";
+import { Button } from "../components/ui/button";
 import logo from "../assets/tvscredit-logo.png";
 
 const LoginPage = ({ projectTitle = "Project Portal" }) => {
