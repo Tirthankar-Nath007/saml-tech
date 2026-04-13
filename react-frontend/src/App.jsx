@@ -1,5 +1,5 @@
 import { Routes, Route, Navigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import LoginPage from "./pages/LoginPage";
 import HomePage from "./pages/HomePage";
 
@@ -7,32 +7,35 @@ function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const u = params.get("user");
-    if (u) {
-      setUser(u);
-      window.history.replaceState({}, "", "/");
+  const checkAuth = async () => {
+    try {
+      const res = await fetch("/api/auth/me", { credentials: "include" });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.authenticated) {
+          setUser(data.user_id);
+        }
+      }
+    } catch (err) {
+      console.error("Auth check failed:", err);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
-  }, []);
-
-  const handleLogin = () => {
-    window.location.href = "/api/login";
-  };
-
-  const handleLogout = () => {
-    setUser(null);
-    window.location.href = "/";
   };
 
   if (loading) {
+    checkAuth();
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-muted via-background to-muted">
         <div className="text-muted-foreground">Loading...</div>
       </div>
     );
   }
+
+  const handleLogout = () => {
+    setUser(null);
+    window.location.href = "/api/logout";
+  };
 
   return (
     <Routes>
